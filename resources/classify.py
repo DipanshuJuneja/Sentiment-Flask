@@ -26,18 +26,20 @@ class Classify(Resource):
 	parser = reqparse.RequestParser()
 	parser.add_argument('search_text', type=str, required=True)
 	parser.add_argument('num_results', type=int, required=True)
+	parser.add_argument('result_type', type=str, required=True)
 
 	def post(self):
 		tweets_list = []  # to return, list of dicts
 		search_text = Classify.parser.parse_args()['search_text']   # text to search
 		num_results = Classify.parser.parse_args()['num_results']  # no. of queries
+		result_type = Classify.parser.parse_args()['result_type']  # recent popular mixed
 
 		# User just wants to test the algo
 		if num_results == 0:
 			return {'results': self.class_tweet(search_text)[0], "message":'success'}
 
 
-		for tweet in api.search(q=search_text,lang="en", count=num_results):
+		for tweet in api.search(q=search_text,lang="en", count=num_results, result_type=result_type):
 			tweets_list.append({"classification": Classify.class_tweet(tweet.text),'user_name': tweet.user.name, 
 		    "user_screen_name": tweet.user.screen_name, 'tweet_content': tweet.text, 'ids': tweet.id,
 		    'image_src': tweet.user.profile_image_url_https, 'likes': tweet.favorite_count if tweet.favorite_count else (tweet.retweeted_status.favorite_count if hasattr(tweet,'retweeted_status')  else 0)
@@ -54,7 +56,7 @@ class Classify(Resource):
 		result_prob = clf.predict_proba(to_predict).max()
 		print(result_prob)
 
-		if result_prob > 0.53:
+		if result_prob >= 0.53:
 			# if Positive
 			if result == 1:
 				if result_prob > 0.8:
