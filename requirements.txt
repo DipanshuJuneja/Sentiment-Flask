@@ -1,0 +1,6 @@
+Flask
+Flask-RESTful
+nltk
+numpy
+tweepy
+uwsgi
