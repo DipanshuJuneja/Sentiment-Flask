@@ -6,8 +6,6 @@ app = Flask(__name__)
 api = Api(app)
 
 api.add_resource(Class.Classify, '/classify')
-api.add_resource(Class.LiveStream, '/live')
-api.add_resource(Class.ReturnTweets, '/returnTweets')
 
 if __name__ == '__main__':
 	app.run(port=5000, debug=True)
