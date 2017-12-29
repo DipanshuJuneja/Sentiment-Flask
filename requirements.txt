@@ -6,3 +6,4 @@ tweepy
 uwsgi
 scipy
 sklearn
+urllib3
