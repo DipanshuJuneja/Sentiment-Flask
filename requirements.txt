@@ -4,3 +4,4 @@ nltk
 numpy
 tweepy
 uwsgi
+sklearn
