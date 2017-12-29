@@ -87,13 +87,11 @@ class Classify(Resource):
 class MyStreamListener(tweepy.StreamListener):
 
 	def on_status(self, status):
-		try:
-			stream_list.append({"classification": Classify.class_tweet(status.text),'user_name': status.user.name, 
+		print(status.text)
+		stream_list.append({"classification": Classify.class_tweet(status.text),'user_name': status.user.name, 
 					"user_screen_name": status.user.screen_name, 'tweet_content': status.text, 'ids': status.id,
 					'image_src': status.user.profile_image_url_https, 'likes': status.favorite_count if status.favorite_count else (status.retweeted_status.favorite_count if hasattr(status,'retweeted_status')  else 0)
 					, 'retweets': status.retweet_count if status.retweet_count else (status.retweeted_status.retweet_count if hasattr(status,'retweeted_status')  else 0)})
-		except:
-			return
 
 class LiveStream(Resource):
 	""" Starts the Stream """
