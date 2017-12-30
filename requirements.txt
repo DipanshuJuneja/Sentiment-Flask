@@ -7,3 +7,4 @@ uwsgi
 scipy
 sklearn
 urllib3
+requests

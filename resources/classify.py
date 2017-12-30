@@ -4,6 +4,7 @@ from nltk.tokenize import TweetTokenizer
 import numpy as np
 import tweepy
 import time
+import threading
 
 
 consumer_key = "JwG59C0A3lDgUWQn3fxLx0AV7"
@@ -15,10 +16,14 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_secret)
 api = tweepy.API(auth)
 
+stream_list = []
+myStream = None 
+connected = False
+
 # clf = pickle.load(open("LOGISTIC_CLASSIFIER.p","rb"))
 # features = pickle.load(open("FEATURE_NAMES.p", "rb"))
-clf = pickle.load(open("multinomial_classifier3.p","rb"))
-features = pickle.load(open("new_features2.p","rb"))
+clf = pickle.load(open("MULTI8000.p","rb"))
+features = pickle.load(open("new_features8000.p","rb"))
 
 tokenizer = TweetTokenizer()
 
@@ -37,7 +42,7 @@ class Classify(Resource):
 
 		# User just wants to test the algo
 		if num_results == 0:
-			return {'results': self.class_tweet(search_text)[0], "message":'success'}
+			return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
 		for tweet in api.search(q=search_text,lang="en", count=num_results, result_type=result_type):
 			tweets_list.append({"classification": Classify.class_tweet(tweet.text),'user_name': tweet.user.name, 
@@ -54,9 +59,11 @@ class Classify(Resource):
 		to_predict = np.asarray([tk.count(feature) for feature in features]).reshape(1,-1)
 		result = int(clf.predict(to_predict)[0])
 		result_prob = clf.predict_proba(to_predict).max()
-		print(result_prob)
 
-		if result_prob >= 0.53:
+		print(result_prob)
+		print(result)
+
+		if result_prob >= 0.51:
 			# if Positive
 			if result == 1:
 				if result_prob > 0.8:
@@ -76,3 +83,56 @@ class Classify(Resource):
 					return ["neg",0,0,0,0,0,1,'#EF9A9A']
 		else:
 			return ["trash",0,0,0,0,0,0,'#BDBDBD']
+
+class MyStreamListener(tweepy.StreamListener):
+	def on_status(self, status):
+		stream_list.append({"classification": Classify.class_tweet(status.text),'user_name': status.user.name, 
+			"user_screen_name": status.user.screen_name, 'tweet_content': status.text, 'ids': status.id,
+			'image_src': status.user.profile_image_url_https, 'likes': status.favorite_count if status.favorite_count else (status.retweeted_status.favorite_count if hasattr(status,'retweeted_status')  else 0)
+			, 'retweets': status.retweet_count if status.retweet_count else (status.retweeted_status.retweet_count if hasattr(status,'retweeted_status')  else 0)})
+
+class LiveStream(Resource):
+	"""docstring for LiveStream"""
+	parser = reqparse.RequestParser()
+	parser.add_argument('search_text', type=str, required=True)
+	parser.add_argument('disconnect', type=int, required=True)
+
+	def post(self):
+		global myStream, connected
+		search_text = LiveStream.parser.parse_args()['search_text'] 
+		disconnect = LiveStream.parser.parse_args()['disconnect'] 
+		myStreamListener = MyStreamListener()
+		try:
+			myStream = tweepy.Stream(auth = api.auth, listener=myStreamListener)
+			myStream.filter(track=[search_text], async=True)
+		except:
+			print("ERROR WHILE STARTING")
+			return {'message': 'Error in starting stream'}
+		start = time.time()
+		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,disconnect))
+		t.start()
+		connected = True
+		print("STREAM STARTED")
+		return {'message': 'Stream started'}
+
+def stream_disconnect(start_time,last_for):
+	while True:
+		if (time.time() - start_time) >= last_for:
+			global myStream, stream_list, connected
+			myStream.disconnect()
+			myStream = None 
+			stream_list = []
+			connected = False
+			print("Stream disconnected")
+			break
+	return
+
+class ReturnTweets(Resource):
+	"""docstring for ReturnTweets"""
+	parser = reqparse.RequestParser()
+	parser.add_argument('received', type=int, required=True)
+
+	def post(self):
+		received = ReturnTweets.parser.parse_args()['received']
+		print("current length of stream_list ", len(stream_list))
+		return {"results":stream_list[received:],"connected":connected}
