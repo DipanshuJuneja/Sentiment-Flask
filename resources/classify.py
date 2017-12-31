@@ -125,7 +125,7 @@ class LiveStream(Resource):
 			for row in stream_list:
 				yield json.dumps({"results": [row]})
 			#yield json.dumps({"results": [row for row in stream_list]})
-				time.sleep(1)
+				time.sleep(0.2)
 		return Response(generate(), mimetype='application/json')
 
 def stream_disconnect(start_time,last_for):
