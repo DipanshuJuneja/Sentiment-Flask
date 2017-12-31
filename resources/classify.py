@@ -5,6 +5,8 @@ import numpy as np
 import tweepy
 import time
 import threading
+from flask import Response, json
+
 
 
 consumer_key = "JwG59C0A3lDgUWQn3fxLx0AV7"
@@ -18,12 +20,11 @@ api = tweepy.API(auth)
 
 stream_list = []
 myStream = None 
-connected = False
 
 # clf = pickle.load(open("LOGISTIC_CLASSIFIER.p","rb"))
 # features = pickle.load(open("FEATURE_NAMES.p", "rb"))
-clf = pickle.load(open("MULTI8000.p","rb"))
-features = pickle.load(open("new_features8000.p","rb"))
+clf = pickle.load(open("MULTI8NounR.p","rb"))
+features = pickle.load(open("new_features8000NR.p","rb"))
 
 tokenizer = TweetTokenizer()
 
@@ -60,10 +61,10 @@ class Classify(Resource):
 		result = int(clf.predict(to_predict)[0])
 		result_prob = clf.predict_proba(to_predict).max()
 
-		print(result_prob)
-		print(result)
+		#print(result_prob)
+		#print(result)
 
-		if result_prob >= 0.51:
+		if result_prob > 0.52:
 			# if Positive
 			if result == 1:
 				if result_prob > 0.8:
@@ -90,7 +91,8 @@ class MyStreamListener(tweepy.StreamListener):
 			"user_screen_name": status.user.screen_name, 'tweet_content': status.text, 'ids': status.id,
 			'image_src': status.user.profile_image_url_https, 'likes': status.favorite_count if status.favorite_count else (status.retweeted_status.favorite_count if hasattr(status,'retweeted_status')  else 0)
 			, 'retweets': status.retweet_count if status.retweet_count else (status.retweeted_status.retweet_count if hasattr(status,'retweeted_status')  else 0)})
-		time.sleep(0.2)
+		print("Current length of stream ",len(stream_list))
+		#yield json.dumps({"results": [row]})
 
 class LiveStream(Resource):
 	"""docstring for LiveStream"""
@@ -99,43 +101,50 @@ class LiveStream(Resource):
 	parser.add_argument('disconnect', type=int, required=True)
 
 	def post(self):
-		global myStream, connected
+		global myStream
 		if myStream is not None:
 			return {'message': 'Stream in use'}
+
 		search_text = LiveStream.parser.parse_args()['search_text'] 
 		disconnect = LiveStream.parser.parse_args()['disconnect'] 
 		myStreamListener = MyStreamListener()
+
 		try:
 			myStream = tweepy.Stream(auth = api.auth, listener=myStreamListener)
 			myStream.filter(track=[search_text], async=True)
 		except:
 			print("ERROR WHILE STARTING")
 			return {'message': 'Error in starting stream'}
+
 		start = time.time()
 		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,disconnect))
 		t.start()
-		connected = True
 		print("STREAM STARTED")
-		return {'message': 'Stream started'}
+		time.sleep(8)
+		def generate():
+			for row in stream_list:
+				yield json.dumps({"results": [row]})
+			#yield json.dumps({"results": [row for row in stream_list]})
+				time.sleep(1)
+		return Response(generate(), mimetype='application/json')
 
 def stream_disconnect(start_time,last_for):
 	while True:
 		if (time.time() - start_time) >= last_for:
-			global myStream, stream_list, connected
+			global myStream, stream_list
 			myStream.disconnect()
 			myStream = None 
 			stream_list = []
-			connected = False
 			print("Stream disconnected")
 			break
 	return
 
-class ReturnTweets(Resource):
-	"""docstring for ReturnTweets"""
-	parser = reqparse.RequestParser()
-	parser.add_argument('received', type=int, required=True)
+# class ReturnTweets(Resource):
+# 	"""docstring for ReturnTweets"""
+# 	parser = reqparse.RequestParser()
+# 	parser.add_argument('received', type=int, required=True)
 
-	def post(self):
-		received = ReturnTweets.parser.parse_args()['received']
-		print("current length of stream_list ", len(stream_list))
-		return {"results":stream_list[received:],"connected":connected}
+# 	def post(self):
+# 		received = ReturnTweets.parser.parse_args()['received']
+# 		print("current length of stream_list ", len(stream_list))
+# 		return {"results":stream_list[received:],"connected":connected}
