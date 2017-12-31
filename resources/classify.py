@@ -120,12 +120,12 @@ class LiveStream(Resource):
 		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,disconnect))
 		t.start()
 		print("STREAM STARTED")
-		time.sleep(8)
+		time.sleep(10)
 		def generate():
 			for row in stream_list:
 				yield json.dumps({"results": [row]})
 			#yield json.dumps({"results": [row for row in stream_list]})
-				time.sleep(0.2)
+				time.sleep(0.1)
 		return Response(generate(), mimetype='application/json')
 
 def stream_disconnect(start_time,last_for):
