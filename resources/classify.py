@@ -90,6 +90,7 @@ class MyStreamListener(tweepy.StreamListener):
 			"user_screen_name": status.user.screen_name, 'tweet_content': status.text, 'ids': status.id,
 			'image_src': status.user.profile_image_url_https, 'likes': status.favorite_count if status.favorite_count else (status.retweeted_status.favorite_count if hasattr(status,'retweeted_status')  else 0)
 			, 'retweets': status.retweet_count if status.retweet_count else (status.retweeted_status.retweet_count if hasattr(status,'retweeted_status')  else 0)})
+		time.sleep(0.2)
 
 class LiveStream(Resource):
 	"""docstring for LiveStream"""
@@ -99,6 +100,8 @@ class LiveStream(Resource):
 
 	def post(self):
 		global myStream, connected
+		if myStream is not None:
+			return {'message': 'Stream in use'}
 		search_text = LiveStream.parser.parse_args()['search_text'] 
 		disconnect = LiveStream.parser.parse_args()['disconnect'] 
 		myStreamListener = MyStreamListener()
