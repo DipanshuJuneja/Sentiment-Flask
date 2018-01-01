@@ -32,24 +32,35 @@ class Classify(Resource):
 	"""Classify the text"""
 	parser = reqparse.RequestParser()
 	parser.add_argument('search_text', type=str, required=True)
-	parser.add_argument('num_results', type=int, required=True)
-	parser.add_argument('result_type', type=str, required=True)
+	parser.add_argument('num_results', type=int, required=False)
+	parser.add_argument('result_type', type=str, required=False)
+	parser.add_argument('since_id', type=int, required=False)
 
 	def post(self):
 		tweets_list = []  # to return, list of dicts
 		search_text = Classify.parser.parse_args()['search_text']   # text to search
 		num_results = Classify.parser.parse_args()['num_results']  # no. of queries
 		result_type = Classify.parser.parse_args()['result_type']  # recent popular mixed
+		since_id = Classify.parser.parse_args()['since_id']  # latest than this
 
 		# User just wants to test the algo
 		if num_results == 0:
 			return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
-		for tweet in api.search(q=search_text,lang="en", count=num_results, result_type=result_type):
-			tweets_list.append({"classification": Classify.class_tweet(tweet.text),'user_name': tweet.user.name, 
-			"user_screen_name": tweet.user.screen_name, 'tweet_content': tweet.text, 'ids': tweet.id,
-			'image_src': tweet.user.profile_image_url_https, 'likes': tweet.favorite_count if tweet.favorite_count else (tweet.retweeted_status.favorite_count if hasattr(tweet,'retweeted_status')  else 0)
-			, 'retweets': tweet.retweet_count if tweet.retweet_count else (tweet.retweeted_status.retweet_count if hasattr(tweet,'retweeted_status')  else 0)} )
+		# user is using SEARCH API
+		if num_results and result_type:
+			for tweet in api.search(q=search_text,lang="en", count=num_results, result_type=result_type):
+				tweets_list.append({"classification": Classify.class_tweet(tweet.text),'user_name': tweet.user.name, 
+				"user_screen_name": tweet.user.screen_name, 'tweet_content': tweet.text, 'ids': tweet.id,
+				'image_src': tweet.user.profile_image_url_https, 'likes': tweet.favorite_count if tweet.favorite_count else (tweet.retweeted_status.favorite_count if hasattr(tweet,'retweeted_status')  else 0)
+				, 'retweets': tweet.retweet_count if tweet.retweet_count else (tweet.retweeted_status.retweet_count if hasattr(tweet,'retweeted_status')  else 0)} )
+
+		if since_id:
+			for tweet in api.search(q=search_text,lang="en", count=100, since_id=since_id):
+				tweets_list.append({"classification": Classify.class_tweet(tweet.text),'user_name': tweet.user.name, 
+				"user_screen_name": tweet.user.screen_name, 'tweet_content': tweet.text, 'ids': tweet.id,
+				'image_src': tweet.user.profile_image_url_https, 'likes': tweet.favorite_count if tweet.favorite_count else (tweet.retweeted_status.favorite_count if hasattr(tweet,'retweeted_status')  else 0)
+				, 'retweets': tweet.retweet_count if tweet.retweet_count else (tweet.retweeted_status.retweet_count if hasattr(tweet,'retweeted_status')  else 0)} )
 
 		return {"results": tweets_list, "message":'success'}
 
@@ -98,7 +109,7 @@ class LiveStream(Resource):
 	"""docstring for LiveStream"""
 	parser = reqparse.RequestParser()
 	parser.add_argument('search_text', type=str, required=True)
-	parser.add_argument('disconnect', type=int, required=True)
+	#parser.add_argument('disconnect', type=int, required=True)
 
 	def post(self):
 		global myStream
@@ -106,7 +117,7 @@ class LiveStream(Resource):
 			return {'message': 'Stream in use'}
 
 		search_text = LiveStream.parser.parse_args()['search_text'] 
-		disconnect = LiveStream.parser.parse_args()['disconnect'] 
+	#	disconnect = LiveStream.parser.parse_args()['disconnect'] 
 		myStreamListener = MyStreamListener()
 
 		try:
@@ -117,15 +128,14 @@ class LiveStream(Resource):
 			return {'message': 'Error in starting stream'}
 
 		start = time.time()
-		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,disconnect))
+		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,17))
 		t.start()
 		print("STREAM STARTED")
-		time.sleep(10)
+		time.sleep(15)
 		def generate():
-			for row in stream_list:
-				yield json.dumps({"results": [row]})
-			#yield json.dumps({"results": [row for row in stream_list]})
-				time.sleep(0.1)
+			#for row in stream_list:
+			#	yield json.dumps({"results": [row]})
+			yield json.dumps({"results": [row for row in stream_list]})
 		return Response(generate(), mimetype='application/json')
 
 def stream_disconnect(start_time,last_for):
