@@ -114,7 +114,7 @@ class LiveStream(Resource):
 	def post(self):
 		global myStream
 		if myStream is not None:
-			return {'message': 'Stream in use'}
+			return json.dumps({"results": "Stream in use"})
 
 		search_text = LiveStream.parser.parse_args()['search_text'] 
 	#	disconnect = LiveStream.parser.parse_args()['disconnect'] 
@@ -125,7 +125,7 @@ class LiveStream(Resource):
 			myStream.filter(track=[search_text], async=True)
 		except:
 			print("ERROR WHILE STARTING")
-			return {'message': 'Error in starting stream'}
+			return json.dumps({"results": "Error in starting stream"})
 
 		start = time.time()
 		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,17))
