@@ -51,7 +51,7 @@ class Classify(Resource):
 		if num_results and result_type:
 			for tweet in api.search(q=search_text,lang="en", count=num_results, result_type=result_type):
 				tweets_list.append({"classification": Classify.class_tweet(tweet.text),'user_name': tweet.user.name, 
-				"user_screen_name": tweet.user.screen_name, 'tweet_content': tweet.text, 'ids': tweet.id,
+				"user_screen_name": '@'+tweet.user.screen_name, 'tweet_content': tweet.text, 'ids': tweet.id,
 				'image_src': tweet.user.profile_image_url_https, 'likes': tweet.favorite_count if tweet.favorite_count else (tweet.retweeted_status.favorite_count if hasattr(tweet,'retweeted_status')  else 0)
 				, 'retweets': tweet.retweet_count if tweet.retweet_count else (tweet.retweeted_status.retweet_count if hasattr(tweet,'retweeted_status')  else 0)} )
 
