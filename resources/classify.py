@@ -115,44 +115,7 @@ class LiveStream(Resource):
 	parser.add_argument('search_text', type=str, required=True)
 	#parser.add_argument('disconnect', type=int, required=True)
 
-	def post(self):
-		global myStream
-		if myStream is not None:
-			return {"results": "Stream in use"}
-
-		search_text = LiveStream.parser.parse_args()['search_text'] 
-	#	disconnect = LiveStream.parser.parse_args()['disconnect'] 
-		myStreamListener = MyStreamListener()
-
-		try:
-			myStream = tweepy.Stream(auth = api.auth, listener=myStreamListener)
-			myStream.filter(track=[search_text], async=True)
-		except:
-			print("ERROR WHILE STARTING")
-			return {"results": "Error in starting stream"}
-
-		start = time.time()
-		t = threading.Thread(target=stream_disconnect, name="stream_start", args=(start,17))
-		t.start()
-		print("STREAM STARTED")
-		time.sleep(15)
-		def generate():
-			#for row in stream_list:
-			#	yield json.dumps({"results": [row]})
-			yield json.dumps({"results": [row for row in stream_list]})
-		return Response(generate(), mimetype='application/json')
-
-def stream_disconnect(start_time,last_for):
-	while True:
-		if (time.time() - start_time) >= last_for:
-			global myStream, stream_list
-			myStream.disconnect()
-			myStream = None 
-			stream_list = []
-			print("Stream disconnected")
-			break
-	return
-
+	
 # class ReturnTweets(Resource):
 # 	"""docstring for ReturnTweets"""
 # 	parser = reqparse.RequestParser()
