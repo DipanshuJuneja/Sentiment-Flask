@@ -9,11 +9,12 @@ from flask import Response, json
 from paralleldots import set_api_key, sentiment
 
 
-
+### YOUR OWN API KEYS AND TOKEN/SECRET ####
 consumer_key = "JwG59C0A3lDgUWQn3fxLx0AV7"
 consumer_secret = "VaJ8lAdmpMWGIMluCGi8DmH2GxPx099IEXAahb2DiFZan7rCgZ"
 access_token = "67006072-H5mlQrT0PkIx3B2zH07NSQftAFPGYMzAReqDVr4jD"
 access_secret = "sSnZRzLTgIQrcuw3HG2ScD8G3OuKlDi6LMC64D3wSbRyk"
+#################
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_secret)
@@ -46,7 +47,9 @@ class Classify(Resource):
 
 		# User just wants to test the algo
 		if num_results == 0:
+			## YOUR OWN KEY ###
 			set_api_key('gIX6AK1i1b1O4EG5hHJ79JCDuT4OUk7vRyagH1gfrQM')
+			################
 			result_parallel = sentiment(search_text)["sentiment"]
 			to_return = None
 
