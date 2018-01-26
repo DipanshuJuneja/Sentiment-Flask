@@ -6,6 +6,7 @@ import tweepy
 import time
 import threading
 from flask import Response, json
+from paralleldots import set_api_key, sentiment
 
 
 
@@ -45,7 +46,19 @@ class Classify(Resource):
 
 		# User just wants to test the algo
 		if num_results == 0:
-			return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
+			set_api_key('gIX6AK1i1b1O4EG5hHJ79JCDuT4OUk7vRyagH1gfrQM')
+			result_parallel = sentiment(search_text)["sentiment"]
+			to_return = None
+
+			if result_parallel == "positive":
+				to_return = "pos"
+			elif result_parallel == "negative":
+				to_return = "neg"
+			else:
+				to_return = "trash"
+			
+			
+			return {'results': to_return, "message":'success'}
 
 		# user is using SEARCH API
 		if num_results and result_type:

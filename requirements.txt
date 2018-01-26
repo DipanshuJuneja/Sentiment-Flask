@@ -8,3 +8,4 @@ scipy
 sklearn
 urllib3
 requests
+paralleldots
