@@ -6,14 +6,14 @@ import tweepy
 import time
 import threading
 from flask import Response, json
-
+from paralleldots import set_api_key, sentiment_social
 
 
 ### YOUR OWN API KEYS AND TOKEN/SECRET ####
-consumer_key = "YOUR consumer_key"
-consumer_secret = "YOUR consumer_secret"
-access_token = "YOUR access_token"
-access_secret = "YOUR access_secret"
+consumer_key = "JwG59C0A3lDgUWQn3fxLx0AV7"
+consumer_secret = "VaJ8lAdmpMWGIMluCGi8DmH2GxPx099IEXAahb2DiFZan7rCgZ"
+access_token = "67006072-H5mlQrT0PkIx3B2zH07NSQftAFPGYMzAReqDVr4jD"
+access_secret = "sSnZRzLTgIQrcuw3HG2ScD8G3OuKlDi6LMC64D3wSbRyk"
 #################
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -25,8 +25,8 @@ myStream = None
 
 # clf = pickle.load(open("LOGISTIC_CLASSIFIER.p","rb"))
 # features = pickle.load(open("FEATURE_NAMES.p", "rb"))
-clf = pickle.load(open("MULTI8NounR.p","rb"))
-features = pickle.load(open("new_features8000NR.p","rb"))
+clf = pickle.load(open("Multinomial_TwitData60K.p","rb"))
+features = pickle.load(open("features_TwitData60K.p","rb"))
 
 tokenizer = TweetTokenizer()
 
@@ -47,9 +47,27 @@ class Classify(Resource):
 
 		# User just wants to test the algo
 		if num_results == 0:
-			
-			
-			return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
+			## YOUR OWN KEY ###
+			try:
+
+				set_api_key('gIX6AK1i1b1O4EG5hHJ79JCDuT4OUk7vRyagH1gfrQM')
+				################
+				result_parallel = sentiment_social(search_text)["sentiment"]
+				to_return = None
+
+				if result_parallel == "positive":
+					to_return = "pos"
+				elif result_parallel == "negative":
+					to_return = "neg"
+				elif result_parallel == "neutral":
+					to_return = "trash"
+				else:
+					raise Exception("didnt work")
+
+				return {'results': to_return, "message":'success'}
+
+			except:
+				return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
 		# user is using SEARCH API
 		if num_results and result_type:
@@ -79,24 +97,25 @@ class Classify(Resource):
 		#print(result_prob)
 		#print(result)
 
-		if result_prob > 0.52:
-			# if Positive
-			if result == 1:
-				if result_prob > 0.8:
-					return ["pos",1,0,0,0,0,0,'#A5D6A7']
-				elif result_prob > 0.65:
-					return ["pos",0,1,0,0,0,0,'#A5D6A7']
-				else:
-					return ["pos",0,0,1,0,0,0,'#A5D6A7']
-
-			# if Negative
+		# if Positive
+		if result == 4:
+			if result_prob > 0.8:
+				return ["pos",1,0,0,0,0,0,'#A5D6A7']
+			elif result_prob > 0.65:
+				return ["pos",0,1,0,0,0,0,'#A5D6A7']
 			else:
-				if result_prob > 0.8:
-					return ["neg",0,0,0,1,0,0,'#EF9A9A']
-				elif result_prob > 0.65:
-					return ["neg",0,0,0,0,1,0,'#EF9A9A']
-				else:
-					return ["neg",0,0,0,0,0,1,'#EF9A9A']
+				return ["pos",0,0,1,0,0,0,'#A5D6A7']
+
+		# if Negative
+		elif result == 0:
+			if result_prob > 0.8:
+				return ["neg",0,0,0,1,0,0,'#EF9A9A']
+			elif result_prob > 0.65:
+				return ["neg",0,0,0,0,1,0,'#EF9A9A']
+			else:
+				return ["neg",0,0,0,0,0,1,'#EF9A9A']
+
+		# Neutral
 		else:
 			return ["trash",0,0,0,0,0,0,'#BDBDBD']
 
@@ -116,12 +135,3 @@ class LiveStream(Resource):
 	#parser.add_argument('disconnect', type=int, required=True)
 
 	
-# class ReturnTweets(Resource):
-# 	"""docstring for ReturnTweets"""
-# 	parser = reqparse.RequestParser()
-# 	parser.add_argument('received', type=int, required=True)
-
-# 	def post(self):
-# 		received = ReturnTweets.parser.parse_args()['received']
-# 		print("current length of stream_list ", len(stream_list))
-# 		return {"results":stream_list[received:],"connected":connected}
