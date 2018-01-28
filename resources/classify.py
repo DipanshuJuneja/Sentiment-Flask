@@ -10,10 +10,10 @@ from paralleldots import set_api_key, sentiment_social
 
 
 ### YOUR OWN API KEYS AND TOKEN/SECRET ####
-consumer_key = "JwG59C0A3lDgUWQn3fxLx0AV7"
-consumer_secret = "VaJ8lAdmpMWGIMluCGi8DmH2GxPx099IEXAahb2DiFZan7rCgZ"
-access_token = "67006072-H5mlQrT0PkIx3B2zH07NSQftAFPGYMzAReqDVr4jD"
-access_secret = "sSnZRzLTgIQrcuw3HG2ScD8G3OuKlDi6LMC64D3wSbRyk"
+consumer_key = ""
+consumer_secret = ""
+access_token = ""
+access_secret = ""
 #################
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -48,26 +48,8 @@ class Classify(Resource):
 		# User just wants to test the algo
 		if num_results == 0:
 			## YOUR OWN KEY ###
-			try:
-
-				set_api_key('gIX6AK1i1b1O4EG5hHJ79JCDuT4OUk7vRyagH1gfrQM')
-				################
-				result_parallel = sentiment_social(search_text)["sentiment"]
-				to_return = None
-
-				if result_parallel == "positive":
-					to_return = "pos"
-				elif result_parallel == "negative":
-					to_return = "neg"
-				elif result_parallel == "neutral":
-					to_return = "trash"
-				else:
-					raise Exception("didnt work")
-
-				return {'results': to_return, "message":'success'}
-
-			except:
-				return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
+			
+			return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
 		# user is using SEARCH API
 		if num_results and result_type:
