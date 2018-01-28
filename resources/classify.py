@@ -4,9 +4,8 @@ from nltk.tokenize import TweetTokenizer
 import numpy as np
 import tweepy
 import time
-import threading
 from flask import Response, json
-from paralleldots import set_api_key, sentiment_social
+
 
 
 ### YOUR OWN API KEYS AND TOKEN/SECRET ####
