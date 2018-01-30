@@ -2,16 +2,16 @@ from flask_restful import Resource, reqparse
 import pickle
 from nltk.tokenize import TweetTokenizer
 import numpy as np
+import re
 import tweepy
-
-
+from paralleldots import set_api_key, sentiment_social
 
 
 ### YOUR OWN API KEYS AND TOKEN/SECRET ####
-consumer_key = ""
-consumer_secret = ""
-access_token = ""
-access_secret = ""
+consumer_key = "JwG59C0A3lDgUWQn3fxLx0AV7"
+consumer_secret = "VaJ8lAdmpMWGIMluCGi8DmH2GxPx099IEXAahb2DiFZan7rCgZ"
+access_token = "67006072-H5mlQrT0PkIx3B2zH07NSQftAFPGYMzAReqDVr4jD"
+access_secret = "sSnZRzLTgIQrcuw3HG2ScD8G3OuKlDi6LMC64D3wSbRyk"
 #################
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -21,10 +21,10 @@ api = tweepy.API(auth)
 
 # clf = pickle.load(open("LOGISTIC_CLASSIFIER.p","rb"))
 # features = pickle.load(open("FEATURE_NAMES.p", "rb"))
-clf = pickle.load(open("Multinomial_TwitData35K.p","rb"))
-features = pickle.load(open("features_TwitData35K.p","rb"))
+clf = pickle.load(open("Multinomial_TwitData15K.p","rb"))
+features = pickle.load(open("features_TwitData15K.p","rb"))
 
-tokenizer = TweetTokenizer(strip_handles=True)
+tokenizer = TweetTokenizer(strip_handles=True, reduce_len=True)
 
 class Classify(Resource):
 	"""Classify the text"""
@@ -44,8 +44,27 @@ class Classify(Resource):
 		# User just wants to test the algo
 		if num_results == 0:
 			## YOUR OWN KEY ###
-			
-			return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
+			try:
+				## rm
+				set_api_key('gIX6AK1i1b1O4EG5hHJ79JCDuT4OUk7vRyagH1gfrQM')
+				################
+				result_parallel = sentiment_social(search_text)["sentiment"]
+				to_return = None
+
+				if result_parallel == "positive":
+					to_return = "pos"
+				elif result_parallel == "negative":
+					to_return = "neg"
+				elif result_parallel == "neutral":
+					to_return = "trash"
+				else:
+					raise Exception("didnt work")
+
+				return {'results': to_return, "message":'success'}
+
+			except:
+	
+				return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
 		# user is using SEARCH API
 		if num_results and result_type:
@@ -67,7 +86,8 @@ class Classify(Resource):
 	# has to be called for Live streamed tweets as well
 	@staticmethod
 	def class_tweet(tweet_text):
-		tk = tokenizer.tokenize(tweet_text)  # ["You", "me", "together"]
+		new_text = re.sub('[^a-zA-Z@\' \n\.]', '', tweet_text)
+		tk = tokenizer.tokenize(new_text)  # ["You", "me", "together"]
 		to_predict = np.asarray([tk.count(feature) for feature in features]).reshape(1,-1)
 		result = int(clf.predict(to_predict)[0])
 		result_prob = clf.predict_proba(to_predict).max()
