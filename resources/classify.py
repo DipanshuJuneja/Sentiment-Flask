@@ -21,8 +21,8 @@ api = tweepy.API(auth)
 
 # clf = pickle.load(open("LOGISTIC_CLASSIFIER.p","rb"))
 # features = pickle.load(open("FEATURE_NAMES.p", "rb"))
-clf = pickle.load(open("Logistic70Regression_TwitData16K.p","rb"))
-features = pickle.load(open("LOGISTIC70features_TwitData16K.p","rb"))
+clf = pickle.load(open("Logistic70Regression_TwitData56K.p","rb"))
+features = pickle.load(open("LOGISTIC70features_TwitData56K.p","rb"))
 
 tokenizer = TweetTokenizer(strip_handles=True, reduce_len=True)
 
@@ -63,7 +63,7 @@ class Classify(Resource):
 				return {'results': to_return, "message":'success'}
 
 			except:
-				
+
 				return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
 		# user is using SEARCH API
@@ -86,8 +86,8 @@ class Classify(Resource):
 	# has to be called for Live streamed tweets as well
 	@staticmethod
 	def class_tweet(tweet_text):
-		#new_text = re.sub('[^a-zA-Z@\' \n\.]', '', tweet_text)
-		tk = tokenizer.tokenize(tweet_text)  # ["You", "me", "together"]
+		new_text = re.sub('[^a-zA-Z@\' \n\.]', '', tweet_text)
+		tk = tokenizer.tokenize(new_text)  # ["You", "me", "together"]
 		to_predict = np.array([tk.count(feature) for feature in features]).reshape(1,-1)
 		result = int(clf.predict(to_predict)[0])
 		result_prob = clf.predict_proba(to_predict).max()
