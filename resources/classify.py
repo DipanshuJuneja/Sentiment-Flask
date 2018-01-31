@@ -63,7 +63,7 @@ class Classify(Resource):
 				return {'results': to_return, "message":'success'}
 
 			except:
-	
+				
 				return {'results': Classify.class_tweet(search_text)[0], "message":'success'}
 
 		# user is using SEARCH API
@@ -88,39 +88,35 @@ class Classify(Resource):
 	def class_tweet(tweet_text):
 		#new_text = re.sub('[^a-zA-Z@\' \n\.]', '', tweet_text)
 		tk = tokenizer.tokenize(tweet_text)  # ["You", "me", "together"]
-		to_predict = np.asarray([tk.count(feature) for feature in features]).reshape(1,-1)
+		to_predict = np.array([tk.count(feature) for feature in features]).reshape(1,-1)
 		result = int(clf.predict(to_predict)[0])
 		result_prob = clf.predict_proba(to_predict).max()
 
-		#print(result_prob)
-		#print(result)
-
-		#if result_prob > 51.5:
 
 		# if Positive
-		if result == 4:
-			if result_prob > 0.8:
-				return ["pos",1,0,0,0,0,0,'#A5D6A7']
-			elif result_prob > 0.65:
-				return ["pos",0,1,0,0,0,0,'#A5D6A7']
-			else:
-				return ["pos",0,0,1,0,0,0,'#A5D6A7']
+		if result_prob > 0.515:
+			if result == 4:
+				if result_prob > 0.8:
+					return ["pos",1,0,0,0,0,0,'#A5D6A7']
+				elif result_prob > 0.65:
+					return ["pos",0,1,0,0,0,0,'#A5D6A7']
+				else:
+					return ["pos",0,0,1,0,0,0,'#A5D6A7']
 
-		# if Negative
-		elif result == 0:
-			if result_prob > 0.8:
-				return ["neg",0,0,0,1,0,0,'#EF9A9A']
-			elif result_prob > 0.65:
-				return ["neg",0,0,0,0,1,0,'#EF9A9A']
+			# if Negative
 			else:
-				return ["neg",0,0,0,0,0,1,'#EF9A9A']
-		#else:
-		#	pass
-			
+				if result_prob > 0.8:
+					return ["neg",0,0,0,1,0,0,'#EF9A9A']
+				elif result_prob > 0.65:
+					return ["neg",0,0,0,0,1,0,'#EF9A9A']
+				else:
+					return ["neg",0,0,0,0,0,1,'#EF9A9A']
 
 		# Neutral
 		else:
 			return ["trash",0,0,0,0,0,0,'#BDBDBD']
+		
+
 
 class MyStreamListener(tweepy.StreamListener):
 	def on_status(self, status):
